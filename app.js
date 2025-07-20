@@ -1,46 +1,23 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
 require('./config/db-connection');
-const User = require('./models/user');
-const { validateSignupData } = require('./utils/validation');
-
 const app = express();
+
+const cookieParser = require('cookie-parser');
+
+const userAuthRouter = require('./routes/userAuth');
+const profileRouter = require('./routes/profile');
+
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(cookieParser()); // Middleware to parse cookies
 
-// Endpoint to create a new user
-app.post('/api/signup', async (req, res) => {
-  try{
-    const reqData = {...req.body}; // Create a shallow copy of the request body
-    validateSignupData(reqData); // validateSignupData is a function that validates the request data
-    const hasedPassword = await bcrypt.hash(reqData.password, 10); // encrpt password
-    reqData.password = hasedPassword; // replace password with encrypted password
-    const user = new User(reqData); // Create a new user instance with the request data
-    await user.save(); // Save the user to the database
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    console.error('Error creating user:', error.message);
-    res.status(400).json({ error: error.message });
-  }
-});
+app.use('/api', userAuthRouter);
+app.use('/api', profileRouter);
 
-app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email: email.toLowerCase() }); // Find user by email
-    if (!user) {  
-      throw new Error('Invalid credentials'); // If user not found, throw error
-    }
-    const isMatch = await bcrypt.compare(password, user.password); // Compare provided password with stored hashed password
-    if (!isMatch) {
-      throw new Error('Invalid credentials');
-    }
-    res.send('Login successful'); // If credentials match, send success response
-  } catch (error) {
-    // console.error('Error during login:', error.message);
-    res.status(400).json({ error: error.message });
-  }
-});
 
+
+
+
+const User = require('./models/user');
 // Endpoint to update an existing user
 app.patch('/api/user/:id', async (req, res) => {
   const userId = req.params.id;

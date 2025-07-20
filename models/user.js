@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -33,12 +34,12 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    validate(value){
-      if(!['male', 'female', 'other'].includes(value)) {
-        throw new Error('Gender must be male, female, or other');
+    set: v => v ? v.toLowerCase() : v, // set value to lowercase
+    enum: {
+      values: ['male', 'female', 'other'], // Allowed values for
+      message: `{VALUE} is not a valid gender` // Custom error message for invalid
     }
   },
-},
   photoUrl: {
     type: String,
     default: 'https://www.shutterstock.com/image-vector/person-gray-photo-placeholder-woman-600nw-1241538838.jpg', // Default profile photo URL
@@ -60,6 +61,17 @@ const userSchema = new mongoose.Schema({
   timestamps: true // Automatically manage createdAt and updatedAt fields by mongoose
   }
 );
+
+userSchema.methods.getJwtToken = async function() {
+  const user = this; // Reference to the user instance
+  // Generate a JWT token with the user's ID and a secret key
+  const token = await jwt.sign(
+    { _id: user._id },
+    'devTinderSelfProject', // Your actual JWT secret
+    { expiresIn: '1d' } // Token expiration time
+  );
+  return token; // Return the generated token
+}
 
 const User = mongoose.model('User', userSchema);
 
