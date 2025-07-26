@@ -6,13 +6,16 @@ const cookieParser = require('cookie-parser');
 
 const userAuthRouter = require('./routes/userAuth');
 const profileRouter = require('./routes/profile');
+const connectionRequestRouter = require('./routes/connectionRequest');
+const userRouter = require('./routes/user');
 
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(cookieParser()); // Middleware to parse cookies
 
 app.use('/api', userAuthRouter);
 app.use('/api', profileRouter);
-
+app.use('/api', connectionRequestRouter);
+app.use('/api/user', userRouter);
 
 
 
